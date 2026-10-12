@@ -291,7 +291,8 @@ fn detect_shebang(path: &Path) -> Option<HashSet<String>> {
     let interpreter = shebang_interpreter(&first_line);
 
     let tags: &[&str] = match interpreter_family(interpreter) {
-        "python" => &["python"],
+        // `uv run --script` (PEP 723) runs the script with a managed Python
+        "python" | "uv" => &["python"],
         "node" => &["javascript", "node"],
         // The shebang names the runtime, not the language: these run both
         // JavaScript and TypeScript, so they get no `javascript`/`typescript` tag
@@ -819,6 +820,9 @@ mod tests {
             ("#!/usr/bin/env perl5", "perl"),
             ("#!/usr/bin/env php8.2", "php"),
             ("#!/usr/bin/env nodejs", "node"),
+            ("#!/usr/bin/env -S uv run --script", "python"),
+            ("#!/usr/bin/env -S uv run --quiet --script", "python"),
+            ("#!/home/me/.local/bin/uv run --script", "python"),
             ("#!/usr/bin/env deno", "deno"),
             ("#!/usr/bin/env -S deno run --allow-net", "deno"),
             ("#!/usr/bin/env bun", "bun"),

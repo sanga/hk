@@ -104,6 +104,36 @@ EOF
     refute_output --partial "ruby-script"
 }
 
+@test "types: matches uv run scripts as python" {
+    cat <<EOF > hk.pkl
+amends "$PKL_PATH/Config.pkl"
+
+hooks {
+  ["check"] {
+    steps {
+      ["python"] {
+        types = List("python")
+        check = "echo PYTHON {{ files }}"
+      }
+    }
+  }
+}
+EOF
+    git init
+    git add -A
+    git commit -m "init"
+
+    printf '#!/usr/bin/env -S uv run --script\n# /// script\n# dependencies = []\n# ///\nprint(1)\n' > uv-script
+    printf '#!/usr/bin/env -S ruby\nputs 1\n' > ruby-script
+    chmod +x uv-script ruby-script
+    git add uv-script ruby-script
+
+    run hk check
+    assert_success
+    assert_output --partial "PYTHON uv-script"
+    refute_output --partial "ruby-script"
+}
+
 @test "types: matches lua and versioned interpreters by shebang" {
     cat <<EOF > hk.pkl
 amends "$PKL_PATH/Config.pkl"
